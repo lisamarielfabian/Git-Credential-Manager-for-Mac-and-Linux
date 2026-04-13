@@ -1,0 +1,130 @@
+## Command line usage
+
+This Gem includes an executable which can be used to detect and diff licenses.
+
+To get a full list of available commands and options, run `licensee help`:
+
+```
+Licensee commands:
+  licensee detect [PATH]        # Detect the license of the given project
+  licensee diff [PATH]          # Compare the given license text to a known license
+  licensee help [COMMAND]       # Describe available commands or one specific command
+  licensee license-path [PATH]  # Returns the path to the given project's license file
+  licensee version              # Return the Licensee version
+
+Options:
+  [--remote], [--no-remote]  # Assume PATH is a GitHub owner/repo path
+```
+
+### Detecting a project's license
+
+This gem includes an executable which can be run using the `licensee detect [PATH]` command,
+where `[PATH]` is:
+
+* A directory, for example: `licensee detect vendor/gems/activesupport`
+* A file, for example: `licensee detect LICENSE.txt`
+* A GitHub repository, for example: `licensee detect https://github.com/facebook/react`
+
+If you don't specify any arguments, `licensee detect` will just scan the current directory.
+
+In all cases, you'll get an output that looks like:
+
+```
+License:        MIT License
+Matched files:  LICENSE.md, licensee.gemspec
+LICENSE.md:
+  Content hash:  46cdc03462b9af57968df67b450cc4372ac41f53
+  Attribution:   Copyright (c) 2014-2021 Ben Balter and Licensee contributors
+  Confidence:    100.00%
+  Matcher:       Licensee::Matchers::Exact
+  License:       MIT License
+licensee.gemspec:
+  Confidence:  90.00%
+  Matcher:     Licensee::Matchers::Gemspec
+  License:     MIT License
+```
+
+Here are the available options:
+
+```
+Usage:
+  licensee detect [PATH]
+
+Options:
+  [--json], [--no-json]          # Return output as JSON
+  [--packages], [--no-packages]  # Detect licenses in package manager files
+                                 # Default: true
+  [--readme], [--no-readme]      # Detect licenses in README files
+                                 # Default: true
+  [--confidence=N]               # Confidence threshold
+                                 # Default: 98
+  [--license=LICENSE]            # The SPDX ID or key of the license to compare (implies --diff)
+  [--diff], [--no-diff]          # Compare the license to the closest match
+  [--ref=REF]                    # The name of the commit/branch/tag to search (github.com PATHs only)
+  [--remote], [--no-remote]      # Assume PATH is a GitHub owner/repo path
+  [--filesystem], [--no-filesystem]  # Force looking at the filesystem (ignore git data)
+```
+
+*Note: If you want to parse the command line output for use in another language or tool, it's highly recommended that you use the more stable `--json` output then attempting to parse the human-readable output.*
+
+### Providing an access token
+
+If you wish to scan private GitHub repositories, or are hitting API rate limits, you can configure the embedded [Octokit](https://github.com/octokit/octokit.rb) client using environment variables:
+
+```bash
+OCTOKIT_ACCESS_TOKEN=$OCTOKIT_ACCESS_TOKEN licensee detect rails/rails --remote
+```
+
+### Using Licensee with Docker
+
+*Example (detecting the license of `rails/rails` on GitHub):* `docker run licensee detect rails/rails --remote`
+
+Additional steps are required when working with local files or directories:
+
+```bash
+# For a local directory
+docker run -v /absolute/path/on/host:/path/in/container licensee detect /path/in/container
+
+# For the current directory
+docker run -v $(pwd):/workspace licensee detect /workspace
+
+# For a specific license file
+docker run -v /path/to/license.txt:/workspace/license.txt licensee detect /workspace/license.txt
+```
+
+The `-v` flag mounts volumes from your host machine into the Docker container, making your local files accessible inside the container.
+
+You can pass environment variables with `-e`:
+
+```bash
+docker run -e OCTOKIT_ACCESS_TOKEN=$OCTOKIT_ACCESS_TOKEN licensee detect rails/rails --remote
+```
+
+### Diff
+
+You can also compare a given license to a known license.
+
+```
+Usage:
+  licensee diff [PATH]
+
+Options:
+  [--license=LICENSE]        # The SPDX ID or key of the license to compare
+  [--remote], [--no-remote]  # Assume PATH is a GitHub owner/repo path
+
+Compare the given license text to a known license
+```
+
+### License Path
+
+Licensee can return the path to a given project's license:
+
+```
+Usage:
+  licensee license-path [PATH]
+
+Options:
+  [--remote], [--no-remote]  # Assume PATH is a GitHub owner/repo path
+
+Returns the path to the given project's license file
+```
